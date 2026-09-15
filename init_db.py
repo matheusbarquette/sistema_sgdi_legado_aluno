@@ -7,7 +7,7 @@ cursor = conn.cursor()
 
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS demandas (
-    id INTEGER,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     titulo TEXT,
     descricao TEXT,
     solicitante TEXT,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS demandas (
 
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS comentarios (
-    id INTEGER,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     demanda_id INTEGER,
     comentario TEXT,
     autor TEXT,

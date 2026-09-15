@@ -12,6 +12,22 @@ def get_db():
     return conn
 
 
+def criar_demanda(conn, titulo, descricao, solicitante):
+    """Insere uma nova demanda e devolve o id gerado.
+
+    Extraída da rota /nova_demanda para poder ser testada isoladamente
+    (teste unitário) sem precisar de Flask nem de um banco real.
+    """
+    cursor = conn.cursor()
+    cursor.execute(
+        'INSERT INTO demandas (titulo, descricao, solicitante, data_criacao) '
+        'VALUES (?, ?, ?, ?)',
+        (titulo, descricao, solicitante, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    )
+    conn.commit()
+    return cursor.lastrowid
+
+
 @app.route('/')
 def index():
     conn = sqlite3.connect('demandas.db')
@@ -28,13 +44,8 @@ def nova_demanda():
         descricao = request.form['descricao']
         solicitante = request.form['solicitante']
 
-
         conn = sqlite3.connect('demandas.db')
-        cursor = conn.cursor()
-
-        cursor.execute(
-            f"INSERT INTO demandas (titulo, descricao, solicitante, data_criacao) VALUES ('{titulo}', '{descricao}', '{solicitante}', '{datetime.now()}')")
-        conn.commit()
+        criar_demanda(conn, titulo, descricao, solicitante)
         conn.close()
 
         flash('Salvo!')

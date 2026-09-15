@@ -19,6 +19,17 @@ Acesse: http://localhost:5000
 - Visualizar detalhes
 - Comentários
 
+## Testes
+
+O projeto tem testes automatizados (unitário, integração e E2E) para o
+cadastro de demandas. Veja **[TESTES.md](TESTES.md)** para a explicação de
+cada tipo e como rodar.
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
 ---
 
 **TODO:**
