@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+  - name: "SGDI"
+    folder: "SGDI"
+    type: file
+    updateIntervalSeconds: 10
+    options:
+      path: /otel-lgtm/sgdi-dashboards

@@ -1,0 +1,25 @@
+# Stack de observabilidade "tudo em um" da Grafana:
+#   OpenTelemetry Collector + Prometheus (métricas) + Tempo (traces)
+#   + Loki (logs) + Pyroscope (profiles) + Grafana (visualização)
+#
+# Subir:   docker compose up -d
+# Grafana: http://localhost:3000  (login automático como admin)
+services:
+  otel-lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: sgdi-otel-lgtm
+    ports:
+      - "3000:3000"   # Grafana
+      - "4317:4317"   # OTLP gRPC (recebe telemetria)
+      - "4318:4318"   # OTLP HTTP (recebe telemetria) <- o SGDI usa esta
+    volumes:
+      # Registra o provider de dashboards do SGDI no Grafana
+      - ./observabilidade/grafana/sgdi-dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/sgdi-dashboards.yaml:ro
+      # Pasta com os JSONs dos dashboards (editou o JSON? o Grafana recarrega sozinho)
+      - ./observabilidade/grafana/dashboards:/otel-lgtm/sgdi-dashboards:ro
+      # Persiste dados de Prometheus/Loki/Tempo/Grafana entre reinícios
+      - lgtm-data:/data
+    restart: unless-stopped
+
+volumes:
+  lgtm-data:
