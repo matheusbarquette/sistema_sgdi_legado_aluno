@@ -3,69 +3,22 @@ import logging
 import sqlite3
 from datetime import datetime
 
-from opentelemetry.instrumentation.utils import suppress_instrumentation
-from opentelemetry.metrics import Observation
-
-from telemetry import configurar_telemetria
-
 app = Flask(__name__)
 app.secret_key = '123456'
 
 # ---------------------------------------------------------------------------
-# Observabilidade (OpenTelemetry)
+# Observabilidade
 # ---------------------------------------------------------------------------
-tracer, meter = configurar_telemetria(app)
+# Não tem nenhum import do OpenTelemetry aqui: quem liga traces, métricas e logs é o
+# comando `opentelemetry-instrument python app.py` (instrumentação automática, ver README).
+# Este arquivo só usa o `logging` padrão do Python — o OTel captura esses logs sozinho.
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s - %(message)s')
 logger = logging.getLogger('sgdi')
 
 # Com debug=True o Flask deixa a exceção "vazar" para o debugger do Werkzeug e a
 # instrumentação não chega a registrar o 500. Assim o Flask responde 500 normalmente:
 # o erro entra na métrica HTTP, o span fica com status=error e o traceback vai pro Loki.
 app.config['PROPAGATE_EXCEPTIONS'] = False
-
-# Métricas de negócio (as de HTTP o FlaskInstrumentor já gera sozinho)
-demandas_criadas = meter.create_counter(
-    'sgdi.demandas.criadas', unit='1', description='Demandas criadas')
-demandas_deletadas = meter.create_counter(
-    'sgdi.demandas.deletadas', unit='1', description='Demandas deletadas')
-comentarios_criados = meter.create_counter(
-    'sgdi.comentarios.criados', unit='1', description='Comentários adicionados')
-buscas_realizadas = meter.create_counter(
-    'sgdi.buscas', unit='1', description='Buscas realizadas')
-resultados_busca = meter.create_histogram(
-    'sgdi.busca.resultados', unit='1', description='Quantidade de resultados por busca')
-
-# Começa os counters em zero: sem isso o Prometheus só "enxerga" o counter depois do
-# primeiro evento, e o increase() do dashboard perde esse primeiro incremento.
-for contador in (demandas_criadas, demandas_deletadas, comentarios_criados):
-    contador.add(0)
-buscas_realizadas.add(0, {'com_resultado': True})
-buscas_realizadas.add(0, {'com_resultado': False})
-
-
-def _contar(sql):
-    # suppress_instrumentation: não gera span para as queries de coleta de métrica
-    with suppress_instrumentation():
-        conn = sqlite3.connect('demandas.db')
-        total = conn.execute(sql).fetchone()[0]
-        conn.close()
-    return total
-
-
-def observar_estoque(options):
-    yield Observation(_contar('SELECT COUNT(*) FROM demandas'))
-
-
-def observar_comentarios_orfaos(options):
-    yield Observation(_contar(
-        'SELECT COUNT(*) FROM comentarios WHERE demanda_id NOT IN (SELECT id FROM demandas WHERE id IS NOT NULL)'))
-
-
-# Gauges observáveis: o SDK chama a função a cada exportação (5s)
-meter.create_observable_gauge(
-    'sgdi.demandas.total', callbacks=[observar_estoque], description='Demandas cadastradas no banco')
-meter.create_observable_gauge(
-    'sgdi.comentarios.orfaos', callbacks=[observar_comentarios_orfaos],
-    description='Comentários ligados a demandas que não existem')
 
 
 def get_db():
@@ -91,20 +44,14 @@ def nova_demanda():
         solicitante = request.form['solicitante']
 
 
-        # Span manual: aparece como filho do span do request no Tempo
-        with tracer.start_as_current_span('salvar_demanda') as span:
-            span.set_attribute('demanda.titulo', titulo)
-            span.set_attribute('demanda.solicitante', solicitante)
+        conn = sqlite3.connect('demandas.db')
+        cursor = conn.cursor()
 
-            conn = sqlite3.connect('demandas.db')
-            cursor = conn.cursor()
+        cursor.execute(
+            f"INSERT INTO demandas (titulo, descricao, solicitante, data_criacao) VALUES ('{titulo}', '{descricao}', '{solicitante}', '{datetime.now()}')")
+        conn.commit()
+        conn.close()
 
-            cursor.execute(
-                f"INSERT INTO demandas (titulo, descricao, solicitante, data_criacao) VALUES ('{titulo}', '{descricao}', '{solicitante}', '{datetime.now()}')")
-            conn.commit()
-            conn.close()
-
-        demandas_criadas.add(1)
         logger.info('Demanda criada', extra={
             'evento': 'demanda_criada',
             'demanda_titulo': titulo,
@@ -152,7 +99,6 @@ def deletar(id):
         logger.warning('Tentativa de deletar demanda inexistente', extra={
             'evento': 'demanda_nao_encontrada', 'demanda_id': id})
     else:
-        demandas_deletadas.add(removidas)
         logger.info('Demanda deletada', extra={'evento': 'demanda_deletada', 'demanda_id': id})
 
     flash('Deletado!')
@@ -162,16 +108,11 @@ def deletar(id):
 @app.route('/buscar')
 def buscar():
     termo = request.args.get('q')
-    with tracer.start_as_current_span('buscar_demandas') as span:
-        span.set_attribute('busca.termo', termo or '')
-        conn = sqlite3.connect('demandas.db')
-        cursor = conn.cursor()
-        resultados = cursor.execute(f"SELECT * FROM demandas WHERE titulo LIKE '%{termo}%'").fetchall()
-        conn.close()
-        span.set_attribute('busca.resultados', len(resultados))
+    conn = sqlite3.connect('demandas.db')
+    cursor = conn.cursor()
+    resultados = cursor.execute(f"SELECT * FROM demandas WHERE titulo LIKE '%{termo}%'").fetchall()
+    conn.close()
 
-    buscas_realizadas.add(1, {'com_resultado': len(resultados) > 0})
-    resultados_busca.record(len(resultados))
     logger.info('Busca realizada', extra={
         'evento': 'busca', 'termo': termo, 'quantidade_resultados': len(resultados)})
     return render_template('index.html', demandas=resultados)
@@ -208,7 +149,6 @@ def adicionar_comentario(demanda_id):
     conn.commit()
     conn.close()
 
-    comentarios_criados.add(1)
     logger.info('Comentário adicionado', extra={
         'evento': 'comentario_criado', 'demanda_id': demanda_id, 'autor': autor})
 

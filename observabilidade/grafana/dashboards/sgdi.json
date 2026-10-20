@@ -104,7 +104,7 @@
       "type": "stat",
       "title": "Demandas cadastradas",
       "id": 2,
-      "description": "Gauge observável: o app conta as linhas da tabela demandas a cada 5s.",
+      "description": "Gauge observável: o app conta as linhas da tabela demandas a cada 5s. Só aparece com a instrumentação MANUAL (ver README, \"Opção 2\").",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -142,7 +142,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "só manual"
         },
         "overrides": []
       },
@@ -164,10 +165,10 @@
       "type": "stat",
       "title": "Demandas criadas (período)",
       "id": 3,
-      "description": "Counter incrementado no POST /nova_demanda.",
+      "description": "Conta os logs com evento=\"demanda_criada\" (logger.info no POST /nova_demanda).",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "loki",
+        "uid": "loki"
       },
       "gridPos": {
         "h": 4,
@@ -178,12 +179,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "loki",
+            "uid": "loki"
           },
-          "expr": "sum(increase(sgdi_demandas_criadas_total{job=\"sgdi\"}[$__range]))",
-          "legendFormat": "",
-          "refId": "A"
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"sgdi\"} | evento=\"demanda_criada\" [$__range])) or vector(0)",
+          "queryType": "instant",
+          "legendFormat": ""
         }
       ],
       "fieldConfig": {
@@ -215,7 +217,7 @@
           "values": false
         },
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "textMode": "auto",
         "justifyMode": "auto"
       }
@@ -224,10 +226,10 @@
       "type": "stat",
       "title": "Demandas deletadas (período)",
       "id": 4,
-      "description": "",
+      "description": "Conta os logs com evento=\"demanda_deletada\".",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "loki",
+        "uid": "loki"
       },
       "gridPos": {
         "h": 4,
@@ -238,12 +240,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "loki",
+            "uid": "loki"
           },
-          "expr": "sum(increase(sgdi_demandas_deletadas_total{job=\"sgdi\"}[$__range])) or vector(0)",
-          "legendFormat": "",
-          "refId": "A"
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"sgdi\"} | evento=\"demanda_deletada\" [$__range])) or vector(0)",
+          "queryType": "instant",
+          "legendFormat": ""
         }
       ],
       "fieldConfig": {
@@ -275,7 +278,7 @@
           "values": false
         },
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "textMode": "auto",
         "justifyMode": "auto"
       }
@@ -284,10 +287,10 @@
       "type": "stat",
       "title": "Comentários (período)",
       "id": 5,
-      "description": "",
+      "description": "Conta os logs com evento=\"comentario_criado\".",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "loki",
+        "uid": "loki"
       },
       "gridPos": {
         "h": 4,
@@ -298,12 +301,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "loki",
+            "uid": "loki"
           },
-          "expr": "sum(increase(sgdi_comentarios_criados_total{job=\"sgdi\"}[$__range]))",
-          "legendFormat": "",
-          "refId": "A"
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"sgdi\"} | evento=\"comentario_criado\" [$__range])) or vector(0)",
+          "queryType": "instant",
+          "legendFormat": ""
         }
       ],
       "fieldConfig": {
@@ -335,7 +339,7 @@
           "values": false
         },
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "textMode": "auto",
         "justifyMode": "auto"
       }
@@ -344,10 +348,10 @@
       "type": "stat",
       "title": "Buscas (período)",
       "id": 6,
-      "description": "",
+      "description": "Conta os logs com evento=\"busca\".",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "loki",
+        "uid": "loki"
       },
       "gridPos": {
         "h": 4,
@@ -358,12 +362,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "loki",
+            "uid": "loki"
           },
-          "expr": "sum(increase(sgdi_buscas_total{job=\"sgdi\"}[$__range]))",
-          "legendFormat": "",
-          "refId": "A"
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"sgdi\"} | evento=\"busca\" [$__range])) or vector(0)",
+          "queryType": "instant",
+          "legendFormat": ""
         }
       ],
       "fieldConfig": {
@@ -395,7 +400,7 @@
           "values": false
         },
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "textMode": "auto",
         "justifyMode": "auto"
       }
@@ -404,7 +409,7 @@
       "type": "stat",
       "title": "Comentários órfãos",
       "id": 7,
-      "description": "Comentários cujo demanda_id não existe. Dívida técnica do legado (sem FOREIGN KEY) virando número!",
+      "description": "Comentários cujo demanda_id não existe. Dívida técnica do legado (sem FOREIGN KEY) virando número! Só aparece com a instrumentação MANUAL (ver README, \"Opção 2\").",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -446,7 +451,8 @@
                 "value": 1
               }
             ]
-          }
+          },
+          "noValue": "só manual"
         },
         "overrides": []
       },
@@ -468,10 +474,10 @@
       "type": "timeseries",
       "title": "Eventos de negócio por minuto",
       "id": 8,
-      "description": "Taxa por minuto dos counters de negócio.",
+      "description": "Logs de negócio por minuto, agrupados pelo campo evento.",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "loki",
+        "uid": "loki"
       },
       "gridPos": {
         "h": 8,
@@ -482,39 +488,12 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "loki",
+            "uid": "loki"
           },
-          "expr": "sum(rate(sgdi_demandas_criadas_total{job=\"sgdi\"}[$__rate_interval])) * 60",
-          "legendFormat": "demandas criadas",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(rate(sgdi_demandas_deletadas_total{job=\"sgdi\"}[$__rate_interval])) * 60",
-          "legendFormat": "demandas deletadas",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(rate(sgdi_comentarios_criados_total{job=\"sgdi\"}[$__rate_interval])) * 60",
-          "legendFormat": "comentários",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(rate(sgdi_buscas_total{job=\"sgdi\"}[$__rate_interval])) * 60",
-          "legendFormat": "buscas",
-          "refId": "D"
+          "refId": "A",
+          "expr": "sum by (evento) (count_over_time({service_name=\"sgdi\"} | evento=~\"demanda_criada|demanda_deletada|comentario_criado|busca\" [1m]))",
+          "legendFormat": "{{evento}}"
         }
       ],
       "fieldConfig": {
@@ -553,10 +532,10 @@
       "type": "timeseries",
       "title": "Buscas: com vs. sem resultado",
       "id": 9,
-      "description": "Muita busca sem resultado = usuário não acha o que procura (o TODO 'Melhorar busca' do README).",
+      "description": "Usa o campo quantidade_resultados do log de busca. Muita busca sem resultado = usuário não acha o que procura (o TODO 'Melhorar busca' do README).",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "loki",
+        "uid": "loki"
       },
       "gridPos": {
         "h": 8,
@@ -567,12 +546,21 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "loki",
+            "uid": "loki"
           },
-          "expr": "sum by (com_resultado) (increase(sgdi_buscas_total{job=\"sgdi\"}[$__rate_interval]))",
-          "legendFormat": "com resultado = {{com_resultado}}",
-          "refId": "A"
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"sgdi\"} | evento=\"busca\" | quantidade_resultados!=\"0\" [$__auto]))",
+          "legendFormat": "com resultado"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "refId": "B",
+          "expr": "sum(count_over_time({service_name=\"sgdi\"} | evento=\"busca\" | quantidade_resultados=\"0\" [$__auto]))",
+          "legendFormat": "sem resultado"
         }
       ],
       "fieldConfig": {
@@ -611,10 +599,10 @@
       "type": "timeseries",
       "title": "Resultados por busca (média)",
       "id": 10,
-      "description": "Histograma sgdi.busca.resultados: soma / contagem.",
+      "description": "unwrap transforma o campo quantidade_resultados do log em número: soma / contagem.",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "loki",
+        "uid": "loki"
       },
       "gridPos": {
         "h": 8,
@@ -625,12 +613,12 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "loki",
+            "uid": "loki"
           },
-          "expr": "sum(rate(sgdi_busca_resultados_sum{job=\"sgdi\"}[$__rate_interval])) / sum(rate(sgdi_busca_resultados_count{job=\"sgdi\"}[$__rate_interval]))",
-          "legendFormat": "média",
-          "refId": "A"
+          "refId": "A",
+          "expr": "sum(sum_over_time({service_name=\"sgdi\"} | evento=\"busca\" | unwrap quantidade_resultados [$__auto])) / sum(count_over_time({service_name=\"sgdi\"} | evento=\"busca\" [$__auto]))",
+          "legendFormat": "média"
         }
       ],
       "fieldConfig": {
