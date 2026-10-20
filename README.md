@@ -149,7 +149,7 @@ Cada opção `--xxx` do `opentelemetry-instrument` equivale a uma variável de a
 | `--semconv_stability_opt_in http` | `OTEL_SEMCONV_STABILITY_OPT_IN` | Usa as convenções HTTP **estáveis**: a métrica sai como `http_server_request_duration_seconds_*`, que é o que o dashboard consulta |
 | `--exporter_otlp_endpoint http://outro-host:4318` | `OTEL_EXPORTER_OTLP_ENDPOINT` | Opcional. O padrão já é `http://localhost:4318` |
 
-Exemplo usando variáveis de ambiente no PowerShell:
+Exemplo usando variáveis de ambiente no **PowerShell**:
 
 ```powershell
 $env:OTEL_SERVICE_NAME = "sgdi"
@@ -158,6 +158,19 @@ $env:OTEL_METRIC_EXPORT_INTERVAL = "5000"
 $env:OTEL_SEMCONV_STABILITY_OPT_IN = "http"
 opentelemetry-instrument python app.py
 ```
+
+O mesmo no **Prompt de Comando (cmd)** do Windows:
+
+```bat
+set OTEL_SERVICE_NAME=sgdi
+set OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+set OTEL_METRIC_EXPORT_INTERVAL=5000
+set OTEL_SEMCONV_STABILITY_OPT_IN=http
+opentelemetry-instrument python app.py
+```
+
+> No cmd **não** coloque espaço nem aspas em volta do `=` (`set NOME=valor`): senão o espaço/aspas viram parte do nome ou do valor.
+> Nos dois casos as variáveis valem só para aquela janela do terminal — abriu outra, precisa definir de novo.
 
 ## Levando para o projeto de vocês (3 passos)
 
